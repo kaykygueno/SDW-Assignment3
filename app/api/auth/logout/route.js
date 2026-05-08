@@ -1,9 +1,14 @@
-// POST /api/auth/logout — clear the session cookie to log the user out
-import { deleteSession } from '../../../../lib/auth';
+// POST /api/auth/logout — expire the session cookie to log the user out
+import { cookies } from 'next/headers';
 
 export async function POST() {
-    // Remove the httpOnly session cookie via the auth helper
-    await deleteSession();
+    // Explicitly set Max-Age=0 so the browser immediately discards the cookie
+    (await cookies()).set('session', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 0,   // expire immediately
+        path: '/',
+    });
 
-    return Response.json({ message: 'Logged out successfully.' });
+    return Response.json({ message: 'Logged out successfully.' }, { status: 200 });
 }

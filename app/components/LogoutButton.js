@@ -6,10 +6,12 @@ import { useRouter } from 'next/navigation';
 export default function LogoutButton() {
     const router = useRouter();
 
-    // POST to the logout API to clear the session cookie, then redirect to login
+    // POST to the logout API to expire the session cookie, then redirect to home
     async function handleLogout() {
-        await fetch('/api/auth/logout', { method: 'POST' });
-        router.push('/login');
+        const res = await fetch('/api/auth/logout', { method: 'POST' });
+        if (res.ok) {
+            router.push('/');
+        }
     }
 
     return (
