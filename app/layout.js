@@ -1,6 +1,7 @@
 // app/layout.js — Root layout with F1 global navigation
 import { Inter } from "next/font/google";
 import Link from "next/link";
+import LogoutButton from "./components/LogoutButton";
 import "./globals.css";
 
 const inter = Inter({
@@ -42,6 +43,8 @@ export default function RootLayout({ children }) {
               >
                 Register
               </Link>
+              {/* Client component handles POST /api/auth/logout then redirects */}
+              <LogoutButton />
             </div>
           </nav>
         </header>
