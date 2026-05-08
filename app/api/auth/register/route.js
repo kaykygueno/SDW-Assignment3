@@ -1,9 +1,11 @@
+// POST /api/auth/register — create a new user account
 import bcrypt from 'bcryptjs';
 import pool from '../../../../lib/db';
 
 export async function POST(request) {
     try {
         const body = await request.json();
+        // Normalise email; default role to 'user'
         const email = body?.email?.trim().toLowerCase();
         const password = body?.password;
         const role = body?.role === 'admin' ? 'admin' : 'user';
@@ -30,6 +32,7 @@ export async function POST(request) {
             );
         }
 
+        // Hash password before storing — never save plaintext
         const hashedPassword = await bcrypt.hash(password, 10);
         const [result] = await pool.execute(
             'INSERT INTO users (email, password, role) VALUES (?, ?, ?)',
@@ -48,6 +51,7 @@ export async function POST(request) {
             { status: 201 }
         );
     } catch (error) {
+        // MySQL unique constraint violation means email is already taken
         if (error?.code === 'ER_DUP_ENTRY') {
             return Response.json(
                 { error: 'An account with this email already exists.' },

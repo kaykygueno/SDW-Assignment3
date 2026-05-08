@@ -1,3 +1,4 @@
+// POST /api/auth/login — verify credentials and set session cookie
 import bcrypt from 'bcryptjs';
 import pool from '../../../../lib/db';
 import { createSession } from '../../../../lib/auth';
@@ -23,6 +24,7 @@ export async function POST(request) {
             );
         }
 
+        // Look up the user by email
         const [rows] = await pool.execute(
             'SELECT id, email, password, role FROM users WHERE email = ? LIMIT 1',
             [email]
@@ -36,6 +38,7 @@ export async function POST(request) {
         }
 
         const user = rows[0];
+        // Compare submitted password against the stored hash
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (!passwordMatch) {
@@ -45,6 +48,7 @@ export async function POST(request) {
             );
         }
 
+        // Credentials valid — create JWT session cookie
         await createSession({
             id: user.id,
             email: user.email,
