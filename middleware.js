@@ -1,3 +1,6 @@
+// middleware.js — DEPRECATED in Next.js 16
+// The active security/RBAC logic lives in proxy.js (same directory).
+// This file is kept as a no-op to avoid breaking older tooling.
 import { NextResponse } from 'next/server';
 
 export function middleware(request) {
@@ -5,5 +8,5 @@ export function middleware(request) {
 }
 
 export const config = {
-    matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+    matcher: [],
 };

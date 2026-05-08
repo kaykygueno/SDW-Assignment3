@@ -1,5 +1,6 @@
-// proxy.js — Role-Based Access Control (RBAC) for F1 Ticket Booking
-// Runs on the Edge before every matched request to enforce authentication and role rules.
+// proxy.js — Security guard for F1 Ticket Booking (App Router)
+// NOTE: Next.js 16 renamed middleware.js to proxy.js. This file is the active one.
+// Runs on the Edge before every matched request to enforce auth and RBAC rules.
 import { NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 
@@ -8,54 +9,79 @@ const SECRET = new TextEncoder().encode(
     process.env.JWT_SECRET || 'fallback_secret'
 );
 
-// Routes any logged-in user can access
-const PROTECTED_ROUTES = ['/dashboard', '/bookings'];
+// Protected routes — any logged-in user may access these
+const PROTECTED_ROUTES = ['/dashboard', '/admin', '/organiser', '/events', '/bookings'];
 
-// Routes only admins can access
-const ADMIN_ROUTES = ['/admin'];
+// Public-only routes — already-logged-in users should be redirected away
+const PUBLIC_ONLY_ROUTES = ['/login', '/register'];
 
 export async function proxy(request) {
     const { pathname } = request.nextUrl;
 
-    const isProtected = PROTECTED_ROUTES.some((r) => pathname.startsWith(r));
-    const isAdmin = ADMIN_ROUTES.some((r) => pathname.startsWith(r));
-
-    // Allow public routes through immediately
-    if (!isProtected && !isAdmin) {
-        return NextResponse.next();
-    }
-
-    // Read the session cookie from the incoming request
+    // Extract the session cookie from the incoming request
     const token = request.cookies.get('session')?.value;
 
-    if (!token) {
-        // No session — redirect to login, preserving the intended destination
-        const loginUrl = new URL('/login', request.url);
-        loginUrl.searchParams.set('from', pathname);
-        return NextResponse.redirect(loginUrl);
+    const isProtected = PROTECTED_ROUTES.some((r) => pathname.startsWith(r));
+    const isPublicOnly = PUBLIC_ONLY_ROUTES.some((r) => pathname.startsWith(r));
+
+    // --- Already logged-in users visiting /login or /register ---
+    // Verify the token; if valid, send them straight to /dashboard
+    if (isPublicOnly && token) {
+        try {
+            await jwtVerify(token, SECRET);
+            return NextResponse.redirect(new URL('/dashboard', request.url));
+        } catch {
+            // Token is invalid/expired — let them through to login/register
+        }
     }
 
-    try {
-        // Verify JWT signature and expiry
-        const { payload } = await jwtVerify(token, SECRET);
-
-        // Admin-only check — attendees and organisers are redirected away
-        if (isAdmin && payload.role !== 'admin') {
-            return NextResponse.redirect(new URL('/dashboard', request.url));
+    // --- Protected routes: require a valid session ---
+    if (isProtected) {
+        if (!token) {
+            // No cookie at all — redirect to login, preserving the intended URL
+            const loginUrl = new URL('/login', request.url);
+            loginUrl.searchParams.set('from', pathname);
+            return NextResponse.redirect(loginUrl);
         }
 
-        // Valid session — let the request through
-        return NextResponse.next();
-    } catch {
-        // Token is invalid or expired — clear the cookie and send to login
-        const loginUrl = new URL('/login', request.url);
-        const response = NextResponse.redirect(loginUrl);
-        response.cookies.delete('session');
-        return response;
+        try {
+            // Verify JWT signature and expiry; extract the payload
+            const { payload } = await jwtVerify(token, SECRET);
+
+            // --- RBAC: /admin is restricted to role === 'admin' only ---
+            if (pathname.startsWith('/admin') && payload.role !== 'admin') {
+                // Redirect non-admins to /dashboard with an error message
+                const dashboardUrl = new URL('/dashboard', request.url);
+                dashboardUrl.searchParams.set('error', 'access_denied');
+                return NextResponse.redirect(dashboardUrl);
+            }
+
+            // --- RBAC: /organiser is restricted to role === 'organiser' or 'admin' ---
+            if (pathname.startsWith('/organiser') && payload.role !== 'organiser' && payload.role !== 'admin') {
+                // Redirect attendees to /dashboard with an error message
+                const dashboardUrl = new URL('/dashboard', request.url);
+                dashboardUrl.searchParams.set('error', 'access_denied');
+                return NextResponse.redirect(dashboardUrl);
+            }
+
+            // Valid session and sufficient role — allow the request through
+            return NextResponse.next();
+        } catch {
+            // Token is invalid or expired — clear the cookie and send to login
+            const loginUrl = new URL('/login', request.url);
+            loginUrl.searchParams.set('from', pathname);
+            const response = NextResponse.redirect(loginUrl);
+            response.cookies.delete('session');
+            return response;
+        }
     }
+
+    // All other routes (home page, static assets etc.) pass through
+    return NextResponse.next();
 }
 
 export const config = {
-    // Run proxy on protected paths only; skip static assets and API routes
-    matcher: ['/dashboard/:path*', '/bookings/:path*', '/admin/:path*'],
+    // Run on all routes except Next.js internals and static files
+    matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\.png$).*)'],
 };
+

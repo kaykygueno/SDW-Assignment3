@@ -34,6 +34,9 @@ export default function RootLayout({ children }) {
               <Link href="/bookings" className="hover:text-[#e10600] transition-colors">
                 My Bookings
               </Link>
+              <Link href="/organiser" className="hover:text-[#e10600] transition-colors">
+                Organiser
+              </Link>
               <Link href="/login" className="hover:text-[#e10600] transition-colors">
                 Login
               </Link>
