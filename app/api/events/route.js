@@ -3,25 +3,77 @@ import pool from '../../../lib/db';
 import { getSession } from '../../../lib/auth';
 
 // ─── GET /api/events ────────────────────────────────────────────────────────
-// Public endpoint — returns all upcoming events ordered by date.
-export async function GET() {
+// Public — all visitors can read events.
+// Behaviour varies by role:
+//   • Organiser  → only their own events (for "My Events" management view)
+//                  unless ?all=true is passed (used by the public listing)
+//   • Admin      → all events always
+//   • Attendee / guest → all events; response includes `can_edit: false`
+//
+// Each row includes a `can_edit` boolean so the UI can show/hide Edit/Delete
+// without a second request.
+export async function GET(request) {
     try {
-        const [rows] = await pool.execute(`
-            SELECT
-                e.id,
-                e.title,
-                e.description,
-                e.event_date,
-                e.location,
-                e.capacity,
-                e.created_at,
-                u.name  AS organiser_name
-            FROM events e
-            JOIN users  u ON u.id = e.organiser_id
-            ORDER BY e.event_date ASC
-        `);
+        // Session is optional — guests still get the public listing
+        const session = await getSession();
+        const role     = session?.role;
+        const userId   = session?.id;
 
-        return Response.json(rows);
+        // ?all=true lets an organiser fetch the full public listing (e.g. for /events page)
+        const { searchParams } = new URL(request.url);
+        const wantsAll = searchParams.get('all') === 'true';
+
+        let rows;
+
+        if (role === 'organiser' && !wantsAll) {
+            // Organiser "My Events" — only their own rows
+            [rows] = await pool.execute(
+                `SELECT
+                    e.id,
+                    e.title,
+                    e.description,
+                    e.event_date,
+                    e.location,
+                    e.capacity,
+                    e.created_at,
+                    e.organiser_id,
+                    u.name AS organiser_name,
+                    1      AS can_edit
+                 FROM events e
+                 JOIN users  u ON u.id = e.organiser_id
+                 WHERE e.organiser_id = ?
+                 ORDER BY e.event_date ASC`,
+                [userId]
+            );
+        } else {
+            // All other cases — full public listing
+            // can_edit = 1 only if the logged-in user owns the row
+            [rows] = await pool.execute(
+                `SELECT
+                    e.id,
+                    e.title,
+                    e.description,
+                    e.event_date,
+                    e.location,
+                    e.capacity,
+                    e.created_at,
+                    e.organiser_id,
+                    u.name AS organiser_name,
+                    CASE
+                        WHEN ? IS NOT NULL AND (e.organiser_id = ? OR ? = 'admin')
+                        THEN 1 ELSE 0
+                    END    AS can_edit
+                 FROM events e
+                 JOIN users  u ON u.id = e.organiser_id
+                 ORDER BY e.event_date ASC`,
+                [userId ?? null, userId ?? null, role ?? null]
+            );
+        }
+
+        // Convert MySQL tinyint 0/1 to proper booleans
+        const events = rows.map(r => ({ ...r, can_edit: r.can_edit === 1 }));
+
+        return Response.json(events);
     } catch (err) {
         console.error('GET /api/events error:', err);
         return Response.json({ error: 'Failed to fetch events.' }, { status: 500 });
