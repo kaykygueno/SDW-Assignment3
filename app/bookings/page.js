@@ -2,6 +2,7 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
 import pool from '@/lib/db';
+import CancelBookingButton from '@/app/components/CancelBookingButton';
 
 export default async function BookingsPage() {
   const user = await getSession();
@@ -71,10 +72,18 @@ export default async function BookingsPage() {
               <p className="text-xs text-green-400 mt-2">
                 Ticket booked on{' '}
                 {new Date(booking.booked_at).toLocaleDateString('en-IE', {
-                  dateStyle: 'medium',
-                })}
+                  dateStyle: 'medium'})}
               </p>
+
+              <p className="text-xs text-yellow-400">
+
+                Booking ID: {booking.booking_id}
+
+              </p>
+
+              <CancelBookingButton bookingId={booking.booking_id} />
             </li>
+            
           ))}
         </ul>
       )}

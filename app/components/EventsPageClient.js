@@ -273,7 +273,7 @@ export default function EventsPageClient({ role }) {
                                     dateStyle: 'medium',
                                 })}
                                 &nbsp;·&nbsp; 📍 {ev.location}
-                                &nbsp;·&nbsp; 🎟 {Number(ev.capacity).toLocaleString()} seats
+                                {Number(ev.capacity) - Number(ev.booked_count)} seats remaining
                             </p>
 
                             <p className="text-xs text-gray-500">
@@ -288,13 +288,29 @@ export default function EventsPageClient({ role }) {
 
                             {/* Attendees can book events */}
                             {role === 'attendee' && (
-                                <button
+                                Number(ev.booked_count) >= Number(ev.capacity) ? (
+                                    <button
+                                    disabled
+                                    className="mt-3 bg-gray-800 text-white px-4 py-2 rounded font-bold uppercase tracking-widest text-xs opacity-70 cursor-not-allowed"
+                                    >
+                                    Event Full
+                                    </button>
+                                ) : ev.already_booked ? (
+                                    <button
+                                    disabled
+                                    className="mt-3 bg-gray-600 text-white px-4 py-2 rounded font-bold uppercase tracking-widest text-xs opacity-70 cursor-not-allowed"
+                                    >
+                                    Already Booked
+                                    </button>
+                                ) : (
+                                    <button
                                     onClick={() => handleBooking(ev.id)}
                                     className="mt-3 bg-[#e10600] text-white px-4 py-2 rounded font-bold uppercase tracking-widest text-xs hover:bg-red-700 transition-colors"
-                                >
+                                    >
                                     Book Now
-                                </button>
-                            )}
+                                    </button>
+                                )
+                                )}
 
                             {/* Organiser owner/admin can edit or delete */}
                             {ev.can_edit === 1 && (

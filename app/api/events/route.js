@@ -59,12 +59,15 @@ export async function GET(request) {
                     e.created_at,
                     e.organiser_id,
                     u.name AS organiser_name,
+                    COUNT(b.id) AS booked_count,
                     CASE
                         WHEN ? IS NOT NULL AND (e.organiser_id = ? OR ? = 'admin')
                         THEN 1 ELSE 0
                     END    AS can_edit
                  FROM events e
                  JOIN users  u ON u.id = e.organiser_id
+                 LEFT JOIN bookings b ON b.event_id = e.id
+                    GROUP BY e.id
                  ORDER BY e.event_date ASC`,
                 [userId ?? null, userId ?? null, role ?? null]
             );

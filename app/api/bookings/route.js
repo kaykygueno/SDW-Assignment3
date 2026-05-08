@@ -92,7 +92,7 @@ export async function POST(request) {
             { status: 201 }
         );
         } catch (error) {
-            if (error.code === "ER_DUP_ENTRY") {
+            if (error.code === "ER_DUP_ENTRY") { // MySQL duplicate entry error code
                 return NextResponse.json(
                     { error: "You have already booked this event." },
                     { status: 400 }
