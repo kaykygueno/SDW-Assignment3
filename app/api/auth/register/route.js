@@ -10,7 +10,10 @@ export async function POST(request) {
         const name = body?.name?.trim();
         const email = body?.email?.trim().toLowerCase();
         const password = body?.password;
-        const role = 'attendee'; // never trust a client-supplied role
+
+        //
+        const allowedRoles = ['attendee', 'organiser'];
+        const role = allowedRoles.includes(body?.role) ? body.role : 'attendee';
 
         if (!name || !email || !password) {
             return Response.json(

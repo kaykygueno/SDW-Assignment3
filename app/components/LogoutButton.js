@@ -10,7 +10,8 @@ export default function LogoutButton() {
     async function handleLogout() {
         const res = await fetch('/api/auth/logout', { method: 'POST' });
         if (res.ok) {
-            router.push('/');
+            router.refresh(); // Refresh to update the layout with the new session state
+            router.push('/'); // Redirect to home after logout
         }
     }
 

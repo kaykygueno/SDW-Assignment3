@@ -52,9 +52,10 @@ export default async function DashboardPage({ searchParams }) {
         <div className="rounded border border-white/10 bg-white/5 px-6 py-5">
           <h2 className="font-bold mb-2">Organiser Tools</h2>
           <p className="text-gray-400 text-sm">
-            <a href="/organiser/create-event" className="text-[#e10600] hover:underline">Create a new event</a>
-            {' '}or view{' '}
-            <a href="/organiser/events" className="text-[#e10600] hover:underline">your events</a>.
+            
+            <a href="/events" className="text-[#e10600] hover:underline">
+              Create and manage events
+            </a>
           </p>
         </div>
       )}

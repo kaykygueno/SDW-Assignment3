@@ -29,6 +29,7 @@ export default function LoginPage() {
 
     if (res.ok) {
       router.push('/dashboard');
+      router.refresh(); // Refresh to update the layout with the new session
     } else {
       const data = await res.json();
       setError(data.error || 'Login failed. Please try again.');

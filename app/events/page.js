@@ -7,6 +7,7 @@ export default async function EventsPage() {
   // Read session server-side — no auth required to view this page
   const session = await getSession();
 
+
   return (
     <main className="flex-1 max-w-5xl mx-auto px-4 py-12 w-full">
       <p className="text-[#e10600] text-xs font-bold tracking-widest uppercase mb-1">

@@ -1,7 +1,8 @@
 'use client';
 // app/components/EventsPageClient.js
-// Client component: shows the full events list for everyone +
-// a "Create Event" form for organisers and admins.
+// Client component: shows the public events list.
+// Organisers/admins can create, edit and delete events.
+// Attendees can book events using the Book Now button.
 
 import { useState, useEffect } from 'react';
 
@@ -14,6 +15,7 @@ const EMPTY_FORM = {
 };
 
 export default function EventsPageClient({ role }) {
+    // Only organisers and admins can create new events
     const canCreate = role === 'organiser' || role === 'admin';
 
     const [events, setEvents] = useState([]);
@@ -23,13 +25,14 @@ export default function EventsPageClient({ role }) {
     const [success, setSuccess] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
-    // ── Fetch all events on mount ─────────────────────────────────────────────
+    // Fetch all events from the API
     async function loadEvents() {
         setLoading(true);
+
         try {
-            // ?all=true so an organiser also sees the full public list on this page
             const res = await fetch('/api/events?all=true');
             const data = await res.json();
+
             setEvents(Array.isArray(data) ? data : []);
         } catch {
             setEvents([]);
@@ -38,13 +41,20 @@ export default function EventsPageClient({ role }) {
         }
     }
 
-    useEffect(() => { loadEvents(); }, []);
+    // Load events when the page first opens
+    useEffect(() => {
+        loadEvents();
+    }, []);
 
-    // ── Form helpers ─────────────────────────────────────────────────────────
+    // Update form state when the user types
     function handleChange(e) {
-        setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        setForm((prev) => ({
+            ...prev,
+            [e.target.name]: e.target.value,
+        }));
     }
 
+    // Create a new event
     async function handleSubmit(e) {
         e.preventDefault();
         setError('');
@@ -65,11 +75,12 @@ export default function EventsPageClient({ role }) {
 
             if (!res.ok) {
                 setError(data.error || 'Failed to create event.');
-            } else {
-                setSuccess(`Event "${form.title}" created!`);
-                setForm(EMPTY_FORM);
-                loadEvents(); // refresh the list
+                return;
             }
+
+            setSuccess(`Event "${form.title}" created successfully.`);
+            setForm(EMPTY_FORM);
+            loadEvents();
         } catch {
             setError('Network error — please try again.');
         } finally {
@@ -77,21 +88,73 @@ export default function EventsPageClient({ role }) {
         }
     }
 
-    // ── Render ────────────────────────────────────────────────────────────────
+    // Book an event as an attendee
+    async function handleBooking(eventId) {
+        setError('');
+        setSuccess('');
+
+        try {
+            const res = await fetch('/api/bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ event_id: eventId }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                setError(data.error || 'Unable to book event.');
+                return;
+            }
+
+            setSuccess(data.message || 'Event booked successfully.');
+            loadEvents();
+        } catch {
+            setError('Network error — please try again.');
+        }
+    }
+
+    // Delete an event owned by the organiser or by admin
+    async function handleDelete(id) {
+        if (!confirm('Delete this event? This cannot be undone.')) return;
+
+        const res = await fetch(`/api/events/${id}`, {
+            method: 'DELETE',
+        });
+
+        if (res.ok) {
+            setSuccess('Event deleted successfully.');
+            loadEvents();
+        } else {
+            const data = await res.json().catch(() => ({}));
+            setError(data.error || 'Failed to delete event.');
+        }
+    }
+
     return (
         <>
-            {/* ── Create Event Form (organiser / admin only) ────────────────── */}
+            
+            {/* Feedback messages for create, delete and booking actions */}
+            {error && (
+                <p className="mb-4 text-sm text-red-400 bg-red-900/30 border border-red-600 rounded px-4 py-2">
+                    {error}
+                </p>
+            )}
+
+            {success && (
+                <p className="mb-4 text-sm text-green-400 bg-green-900/30 border border-green-600 rounded px-4 py-2">
+                    {success}
+                </p>
+            )}
+
+            {/* Create Event Form — only visible to organisers and admins */}
             {canCreate && (
                 <section className="mb-12 rounded border border-white/10 bg-white/5 p-6">
                     <h2 className="text-xl font-bold mb-5 text-[#e10600] uppercase tracking-wider">
                         Create New Event
                     </h2>
 
-                    {error && <p className="mb-4 text-sm text-red-400 bg-red-900/30 border border-red-600 rounded px-4 py-2">{error}</p>}
-                    {success && <p className="mb-4 text-sm text-green-400 bg-green-900/30 border border-green-600 rounded px-4 py-2">{success}</p>}
-
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        {/* Title */}
                         <div className="sm:col-span-2">
                             <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">
                                 Title *
@@ -107,7 +170,6 @@ export default function EventsPageClient({ role }) {
                             />
                         </div>
 
-                        {/* Description */}
                         <div className="sm:col-span-2">
                             <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">
                                 Description *
@@ -123,7 +185,6 @@ export default function EventsPageClient({ role }) {
                             />
                         </div>
 
-                        {/* Date */}
                         <div>
                             <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">
                                 Date *
@@ -138,7 +199,6 @@ export default function EventsPageClient({ role }) {
                             />
                         </div>
 
-                        {/* Capacity */}
                         <div>
                             <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">
                                 Capacity *
@@ -155,7 +215,6 @@ export default function EventsPageClient({ role }) {
                             />
                         </div>
 
-                        {/* Location */}
                         <div className="sm:col-span-2">
                             <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">
                                 Location *
@@ -171,7 +230,6 @@ export default function EventsPageClient({ role }) {
                             />
                         </div>
 
-                        {/* Submit */}
                         <div className="sm:col-span-2">
                             <button
                                 type="submit"
@@ -185,47 +243,61 @@ export default function EventsPageClient({ role }) {
                 </section>
             )}
 
-            {/* ── Events List ───────────────────────────────────────────────────── */}
+            {/* Events List */}
             {loading ? (
                 <p className="text-gray-400">Loading events…</p>
             ) : events.length === 0 ? (
                 <p className="text-gray-400">No events scheduled yet.</p>
             ) : (
                 <ul className="grid gap-4 sm:grid-cols-2">
-                    {events.map(ev => (
+                    {events.map((ev) => (
                         <li
                             key={ev.id}
                             className="rounded border border-white/10 bg-white/5 p-5 flex flex-col gap-2"
                         >
-                            {/* Header row */}
                             <div className="flex items-start justify-between gap-2">
-                                <h3 className="font-bold text-base leading-snug">{ev.title}</h3>
-                                {ev.can_edit && (
+                                <h3 className="font-bold text-base leading-snug">
+                                    {ev.title}
+                                </h3>
+
+                                {ev.can_edit === 1 && (
                                     <span className="text-[10px] font-bold uppercase tracking-widest bg-[#e10600] text-white px-2 py-0.5 rounded shrink-0">
                                         Owner
                                     </span>
                                 )}
                             </div>
 
-                            {/* Meta */}
                             <p className="text-xs text-gray-400">
-                                📅 {new Date(ev.event_date).toLocaleDateString('en-IE', { dateStyle: 'medium' })}
-                                &nbsp;·&nbsp;
-                                📍 {ev.location}
-                                &nbsp;·&nbsp;
-                                🎟 {ev.capacity.toLocaleString()} seats
+                                📅{' '}
+                                {new Date(ev.event_date).toLocaleDateString('en-IE', {
+                                    dateStyle: 'medium',
+                                })}
+                                &nbsp;·&nbsp; 📍 {ev.location}
+                                &nbsp;·&nbsp; 🎟 {Number(ev.capacity).toLocaleString()} seats
                             </p>
 
-                            {/* Organiser */}
-                            <p className="text-xs text-gray-500">Organised by {ev.organiser_name}</p>
+                            <p className="text-xs text-gray-500">
+                                Organised by {ev.organiser_name || 'Unknown organiser'}
+                            </p>
 
-                            {/* Description */}
                             {ev.description && (
-                                <p className="text-sm text-gray-300 mt-1 line-clamp-3">{ev.description}</p>
+                                <p className="text-sm text-gray-300 mt-1 line-clamp-3">
+                                    {ev.description}
+                                </p>
                             )}
 
-                            {/* Edit / Delete — only shown to the owner or admin */}
-                            {ev.can_edit && (
+                            {/* Attendees can book events */}
+                            {role === 'attendee' && (
+                                <button
+                                    onClick={() => handleBooking(ev.id)}
+                                    className="mt-3 bg-[#e10600] text-white px-4 py-2 rounded font-bold uppercase tracking-widest text-xs hover:bg-red-700 transition-colors"
+                                >
+                                    Book Now
+                                </button>
+                            )}
+
+                            {/* Organiser owner/admin can edit or delete */}
+                            {ev.can_edit === 1 && (
                                 <div className="flex gap-3 mt-2">
                                     <a
                                         href={`/organiser/events/${ev.id}/edit`}
@@ -233,6 +305,7 @@ export default function EventsPageClient({ role }) {
                                     >
                                         Edit
                                     </a>
+
                                     <button
                                         onClick={() => handleDelete(ev.id)}
                                         className="text-xs font-bold text-gray-400 hover:text-red-400 transition-colors"
@@ -247,16 +320,4 @@ export default function EventsPageClient({ role }) {
             )}
         </>
     );
-
-    // ── Delete handler ────────────────────────────────────────────────────────
-    async function handleDelete(id) {
-        if (!confirm('Delete this event? This cannot be undone.')) return;
-        const res = await fetch(`/api/events/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-            loadEvents();
-        } else {
-            const data = await res.json().catch(() => ({}));
-            alert(data.error || 'Failed to delete event.');
-        }
-    }
 }
