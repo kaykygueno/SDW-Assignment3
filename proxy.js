@@ -9,8 +9,8 @@ const SECRET = new TextEncoder().encode(
     process.env.JWT_SECRET || 'fallback_secret'
 );
 
-// Protected routes — any logged-in user may access these
-const PROTECTED_ROUTES = ['/dashboard', '/admin', '/organiser', '/events', '/bookings'];
+// Protected routes — any logged-in user may access these (browsing /events is public)
+const PROTECTED_ROUTES = ['/dashboard', '/admin', '/organiser', '/bookings'];
 
 // Public-only routes — already-logged-in users should be redirected away
 const PUBLIC_ONLY_ROUTES = ['/login', '/register'];
