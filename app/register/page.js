@@ -39,16 +39,21 @@ export default function RegisterPage() {
     <main className="flex min-h-screen items-center justify-center p-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-4 rounded-lg border p-8 shadow"
+        className="w-full max-w-sm space-y-4 rounded-lg border border-gray-700 bg-[#1e1e2e] p-8 shadow-lg"
       >
-        <h1 className="text-2xl font-bold">Register</h1>
+        <div className="mb-2">
+          <p className="text-[#e10600] text-xs font-bold tracking-widest uppercase mb-1">
+            F1 Ticket Booking
+          </p>
+          <h1 className="text-2xl font-black">Create Account</h1>
+        </div>
 
         {error && (
-          <p className="rounded bg-red-100 p-2 text-sm text-red-700">{error}</p>
+          <p className="rounded bg-red-900/40 border border-red-600 p-2 text-sm text-red-400">{error}</p>
         )}
 
         <div className="space-y-1">
-          <label htmlFor="name" className="block text-sm font-medium">
+          <label htmlFor="name" className="block text-sm font-medium text-gray-300">
             Name
           </label>
           <input
@@ -58,12 +63,12 @@ export default function RegisterPage() {
             required
             value={form.name}
             onChange={handleChange}
-            className="w-full rounded border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded border border-gray-600 bg-[#15151e] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[#e10600]"
           />
         </div>
 
         <div className="space-y-1">
-          <label htmlFor="email" className="block text-sm font-medium">
+          <label htmlFor="email" className="block text-sm font-medium text-gray-300">
             Email
           </label>
           <input
@@ -73,12 +78,12 @@ export default function RegisterPage() {
             required
             value={form.email}
             onChange={handleChange}
-            className="w-full rounded border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded border border-gray-600 bg-[#15151e] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[#e10600]"
           />
         </div>
 
         <div className="space-y-1">
-          <label htmlFor="password" className="block text-sm font-medium">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-300">
             Password
           </label>
           <input
@@ -89,20 +94,20 @@ export default function RegisterPage() {
             minLength={6}
             value={form.password}
             onChange={handleChange}
-            className="w-full rounded border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded border border-gray-600 bg-[#15151e] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[#e10600]"
           />
         </div>
 
         <button
           type="submit"
-          className="w-full rounded bg-blue-600 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          className="w-full rounded bg-[#e10600] py-2 text-sm font-bold text-white hover:bg-red-700 transition-colors"
         >
           Register
         </button>
 
         <p className="text-center text-sm text-gray-500">
           Already have an account?{' '}
-          <a href="/login" className="text-blue-600 hover:underline">
+          <a href="/login" className="text-[#e10600] hover:underline">
             Log in
           </a>
         </p>
