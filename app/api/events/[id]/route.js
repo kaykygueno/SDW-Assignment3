@@ -5,9 +5,15 @@ import { getSession } from '../../../../lib/auth';
 
 // ── Helper: fetch event row and verify caller owns it ──────────────────────
 async function getEventAndVerify(id, session) {
+    // Validate id is a positive integer before touching the DB
+    const numericId = parseInt(id, 10);
+    if (isNaN(numericId) || numericId < 1) {
+        return { error: 'Invalid event id.', status: 400 };
+    }
+
     const [rows] = await pool.execute(
         'SELECT * FROM events WHERE id = ? LIMIT 1',
-        [id]
+        [numericId]
     );
 
     if (rows.length === 0) return { error: 'Event not found.', status: 404 };

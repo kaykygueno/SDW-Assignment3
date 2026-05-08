@@ -5,13 +5,12 @@ import pool from '../../../../lib/db';
 export async function POST(request) {
     try {
         const body = await request.json();
-        // Normalise email; default role to 'attendee'
+        // Normalise inputs — role is always 'attendee' at self-registration.
+        // Admin/organiser accounts must be created by an admin directly in the DB.
         const name = body?.name?.trim();
         const email = body?.email?.trim().toLowerCase();
         const password = body?.password;
-        const role = body?.role === 'admin' ? 'admin'
-            : body?.role === 'organiser' ? 'organiser'
-                : 'attendee';
+        const role = 'attendee'; // never trust a client-supplied role
 
         if (!name || !email || !password) {
             return Response.json(
