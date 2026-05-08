@@ -5,9 +5,9 @@ import { getSession } from '../../../lib/auth';
 // ─── GET /api/events ────────────────────────────────────────────────────────
 // Public — all visitors can read events.
 // Behaviour varies by role:
-//   • Organiser  → only their own events (for "My Events" management view)
+//   • Organiser : only their own events (for "My Events" management view)
 //                  unless ?all=true is passed (used by the public listing)
-//   • Admin      → all events always
+//   • Admin : all events always
 //   • Attendee / guest → all events; response includes `can_edit: false`
 //
 // Each row includes a `can_edit` boolean so the UI can show/hide Edit/Delete
@@ -16,8 +16,8 @@ export async function GET(request) {
     try {
         // Session is optional — guests still get the public listing
         const session = await getSession();
-        const role     = session?.role;
-        const userId   = session?.id;
+        const role = session?.role;
+        const userId = session?.id;
 
         // ?all=true lets an organiser fetch the full public listing (e.g. for /events page)
         const { searchParams } = new URL(request.url);
