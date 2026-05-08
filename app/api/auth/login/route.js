@@ -26,7 +26,7 @@ export async function POST(request) {
 
         // Look up the user by email
         const [rows] = await pool.execute(
-            'SELECT id, email, password, role FROM users WHERE email = ? LIMIT 1',
+            'SELECT id, name, email, password, role FROM users WHERE email = ? LIMIT 1',
             [email]
         );
 
@@ -48,9 +48,10 @@ export async function POST(request) {
             );
         }
 
-        // Credentials valid — create JWT session cookie
+        // Credentials valid — create JWT session cookie (name included for personalisation)
         await createSession({
             id: user.id,
+            name: user.name,
             email: user.email,
             role: user.role,
         });
