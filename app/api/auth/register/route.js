@@ -5,14 +5,17 @@ import pool from '../../../../lib/db';
 export async function POST(request) {
     try {
         const body = await request.json();
-        // Normalise email; default role to 'user'
+        // Normalise email; default role to 'attendee'
+        const name = body?.name?.trim();
         const email = body?.email?.trim().toLowerCase();
         const password = body?.password;
-        const role = body?.role === 'admin' ? 'admin' : 'user';
+        const role = body?.role === 'admin' ? 'admin'
+            : body?.role === 'organiser' ? 'organiser'
+                : 'attendee';
 
-        if (!email || !password) {
+        if (!name || !email || !password) {
             return Response.json(
-                { error: 'Email and password are required.' },
+                { error: 'Name, email and password are required.' },
                 { status: 400 }
             );
         }
@@ -35,8 +38,8 @@ export async function POST(request) {
         // Hash password before storing — never save plaintext
         const hashedPassword = await bcrypt.hash(password, 10);
         const [result] = await pool.execute(
-            'INSERT INTO users (email, password, role) VALUES (?, ?, ?)',
-            [email, hashedPassword, role]
+            'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
+            [name, email, hashedPassword, role]
         );
 
         return Response.json(
