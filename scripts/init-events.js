@@ -14,8 +14,8 @@ const envVars = Object.fromEntries(
 );
 
 const conn = await mysql.createConnection({
-    host:     envVars.DB_HOST,
-    user:     envVars.DB_USER,
+    host: envVars.DB_HOST,
+    user: envVars.DB_USER,
     password: envVars.DB_PASSWORD,
     database: envVars.DB_NAME,
     multipleStatements: true,
@@ -38,7 +38,7 @@ async function addColumnIfMissing(conn, table, column, definition) {
     }
 }
 
-await addColumnIfMissing(conn, 'events', 'capacity',   'INT UNSIGNED NOT NULL DEFAULT 0');
+await addColumnIfMissing(conn, 'events', 'capacity', 'INT UNSIGNED NOT NULL DEFAULT 0');
 await addColumnIfMissing(conn, 'events', 'created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
 
 // Ensure the FK from organiser_id -> users.id exists
