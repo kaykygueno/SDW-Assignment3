@@ -1,13 +1,7 @@
 // app/layout.js — Root layout with F1 global navigation
-import { Inter } from "next/font/google";
 import Link from "next/link";
 import LogoutButton from "./components/LogoutButton";
 import "./globals.css";
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
 
 export const metadata = {
   title: "F1 Ticket Booking",
@@ -16,7 +10,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${inter.variable} h-full`}>
+    <html lang="en" className="h-full">
       <body className="min-h-full flex flex-col bg-[#15151e] text-white">
         {/* Global navigation bar */}
         <header className="bg-[#15151e] border-b border-[#e10600]">

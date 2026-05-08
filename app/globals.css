@@ -1,4 +1,5 @@
 /* globals.css — Base styles for F1 Ticket Booking app */
+@import url("https://fonts.googleapis.com/css2?family=Michroma&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -12,11 +13,15 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+  /* Michroma — geometric sans used for F1-style UI */
+  --font-michroma: "Michroma", sans-serif;
+  --font-sans: var(--font-michroma);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Michroma", sans-serif;
+  /* Michroma is weight-400 only; a 0.4px stroke adds subtle thickness */
+  -webkit-text-stroke: 0.4px currentColor;
 }
