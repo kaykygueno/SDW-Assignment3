@@ -106,19 +106,18 @@ export default function EventsPageClient({ role }) {
 
             const data = await res.json();
 
-            if (!res.ok) {
-                setError(data.error || 'Unable to book event.');
+            if (res.status === 200) {
+                alert('Successfully Booked!');
+                router.push('/bookings');
                 return;
             }
 
-            // Show success message and redirect to My Bookings page
-            setSuccess(data.message || 'Event booked successfully. Redirecting to My Bookings...');
-            loadEvents();
+            if (res.status === 400) {
+                alert(data.error || 'Unable to book event.');
+                return;
+            }
 
-            // Redirect to bookings page after a short delay to show the success message
-            setTimeout(() => {
-                router.push('/bookings');
-            }, 1500);
+            setError(data.error || 'Unable to book event.');
         } catch {
             setError('Network error — please try again.');
         }

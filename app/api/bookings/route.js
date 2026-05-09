@@ -129,7 +129,7 @@ export async function POST(request) {
 
         return NextResponse.json(
             { message: 'Booking created successfully.', booking_id: result.insertId },
-            { status: 201 }
+            { status: 200 }
         );
     } catch (error) {
         console.error('POST /api/bookings error:', error);
