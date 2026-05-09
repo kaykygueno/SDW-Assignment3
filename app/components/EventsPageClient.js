@@ -18,6 +18,8 @@ const EMPTY_FORM = {
 export default function EventsPageClient({ role }) {
     // Only organisers and admins can create new events
     const canCreate = role === 'organiser' || role === 'admin';
+    const isLoggedIn = !!role;
+    const canSeeBookButton = role === 'attendee' || !isLoggedIn;
     const router = useRouter();
 
     const [events, setEvents] = useState([]);
@@ -112,7 +114,7 @@ export default function EventsPageClient({ role }) {
             // Show success message and redirect to My Bookings page
             setSuccess(data.message || 'Event booked successfully. Redirecting to My Bookings...');
             loadEvents();
-            
+
             // Redirect to bookings page after a short delay to show the success message
             setTimeout(() => {
                 router.push('/bookings');
@@ -120,6 +122,17 @@ export default function EventsPageClient({ role }) {
         } catch {
             setError('Network error — please try again.');
         }
+    }
+
+    // Book Now action for attendees and guests
+    function handleBookNow(eventId) {
+        // Guests should be redirected to login instead of creating a booking
+        if (!isLoggedIn) {
+            router.push('/login');
+            return;
+        }
+
+        handleBooking(eventId);
     }
 
     // Delete an event owned by the organiser or by admin
@@ -141,7 +154,7 @@ export default function EventsPageClient({ role }) {
 
     return (
         <>
-            
+
             {/* Feedback messages for create, delete and booking actions */}
             {error && (
                 <p className="mb-4 text-sm text-red-400 bg-red-900/30 border border-red-600 rounded px-4 py-2">
@@ -294,31 +307,31 @@ export default function EventsPageClient({ role }) {
                                 </p>
                             )}
 
-                            {/* Attendees can book events */}
-                            {role === 'attendee' && (
+                            {/* Attendees can book events; guests are redirected to login */}
+                            {canSeeBookButton && (
                                 Number(ev.booked_count) >= Number(ev.capacity) ? (
                                     <button
-                                    disabled
-                                    className="mt-3 bg-gray-800 text-white px-4 py-2 rounded font-bold uppercase tracking-widest text-xs opacity-70 cursor-not-allowed"
+                                        disabled
+                                        className="mt-3 bg-gray-800 text-white px-4 py-2 rounded font-bold uppercase tracking-widest text-xs opacity-70 cursor-not-allowed"
                                     >
-                                    Event Full
+                                        Event Full
                                     </button>
-                                ) : ev.already_booked ? (
+                                ) : role === 'attendee' && ev.already_booked ? (
                                     <button
-                                    disabled
-                                    className="mt-3 bg-gray-600 text-white px-4 py-2 rounded font-bold uppercase tracking-widest text-xs opacity-70 cursor-not-allowed"
+                                        disabled
+                                        className="mt-3 bg-gray-600 text-white px-4 py-2 rounded font-bold uppercase tracking-widest text-xs opacity-70 cursor-not-allowed"
                                     >
-                                    Already Booked
+                                        Already Booked
                                     </button>
                                 ) : (
                                     <button
-                                    onClick={() => handleBooking(ev.id)}
-                                    className="mt-3 bg-[#e10600] text-white px-4 py-2 rounded font-bold uppercase tracking-widest text-xs hover:bg-red-700 transition-colors"
+                                        onClick={() => handleBookNow(ev.id)}
+                                        className="mt-3 bg-[#e10600] text-white px-4 py-2 rounded font-bold uppercase tracking-widest text-xs hover:bg-red-700 transition-colors"
                                     >
-                                    Book Now
+                                        Book Now
                                     </button>
                                 )
-                                )}
+                            )}
 
                             {/* Organiser owner/admin can edit or delete */}
                             {ev.can_edit === 1 && (
