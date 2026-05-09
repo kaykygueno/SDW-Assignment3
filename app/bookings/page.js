@@ -16,7 +16,7 @@ export default async function BookingsPage() {
   const [bookings] = await pool.execute(
     `SELECT
         b.id AS booking_id,
-        b.created_at AS booked_at,
+        b.booking_date AS booked_at,
         e.id AS event_id,
         e.title,
         e.description,
@@ -37,7 +37,7 @@ export default async function BookingsPage() {
       <p className="text-[#e10600] text-xs font-bold tracking-widest uppercase mb-1">
         Bookings</p>
 
-      <h1 className="text-3xl font-black mb-4">My Tickets</h1>
+      <h1 className="text-3xl font-black mb-4">Your Upcoming Events</h1>
 
       {bookings.length === 0 ? (
         <p className="text-gray-400">
@@ -50,7 +50,8 @@ export default async function BookingsPage() {
               <h2 className="font-bold text-lg">{booking.title}</h2>
 
               <p className="text-xs text-gray-400"> {new Date(booking.event_date).toLocaleDateString('en-IE', {
-                  dateStyle: 'medium', })}
+                dateStyle: 'medium',
+              })}
                 &nbsp;·&nbsp; {booking.location}</p>
 
               <p className="text-xs text-gray-500">
@@ -65,17 +66,18 @@ export default async function BookingsPage() {
               <p className="text-xs text-green-400 mt-2">
                 Ticket booked on{' '}
                 {new Date(booking.booked_at).toLocaleDateString('en-IE', {
-                  dateStyle: 'medium'})}
+                  dateStyle: 'medium'
+                })}
               </p>
 
               <p className="text-xs text-yellow-400">
                 Booking ID: {booking.booking_id}
               </p>
 
-              <CancelBookingButton bookingId={booking.booking_id}/>
+              <CancelBookingButton bookingId={booking.booking_id} />
 
             </li>
-            
+
           ))}
         </ul>
       )}

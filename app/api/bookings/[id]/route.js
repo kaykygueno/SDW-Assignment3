@@ -23,7 +23,7 @@ export async function DELETE(request, { params }) {
         const { id } = await params;
 
         //Check if booking exists and belongs to this user
-        const [rows] = await pool.query(
+        const [rows] = await pool.execute(
             "SELECT * FROM bookings WHERE id = ? AND user_id = ?",
             [id, user.id]
         );
@@ -37,7 +37,7 @@ export async function DELETE(request, { params }) {
         }
 
         //Delete booking from database
-        await pool.query(
+        await pool.execute(
             "DELETE FROM bookings WHERE id = ? AND user_id = ?",
             [id, user.id]
         );
