@@ -47,7 +47,7 @@ const pool = mysql.createPool({
                 console.log('No foreign keys found');
             } else {
                 console.table(fks);
-                
+
                 // Check FK DELETE actions
                 const [fkDetails] = await conn.execute(
                     'SELECT CONSTRAINT_NAME, DELETE_RULE FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME = ?',

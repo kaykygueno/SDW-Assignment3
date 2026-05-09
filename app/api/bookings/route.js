@@ -1,135 +1,165 @@
-import { NextResponse } from "next/server";
-import pool from "@/lib/db";
-import { getSession } from "@/lib/auth";
-import BookingsPage from "@/app/bookings/page";
-// GET /api/bookings
+import { NextResponse } from 'next/server';
+import pool from '@/lib/db';
+import { getSession } from '@/lib/auth';
 
-// Get all bookings for the logged-in user
-
+/**
+ * GET /api/bookings
+ * List bookings for the logged-in user
+ * 
+ * Responses:
+ * 200: [ { booking_id, event_id, title, event_date, location, booking_date } ]
+ * 401: { error } — not authenticated
+ * 500: { error } — database error
+ */
 export async function GET() {
-
     try {
-
         // Get current user from session cookie
-        const user = await getSession();
+        const session = await getSession();
 
         // User must be logged in
-        if (!user) {
-
+        if (!session) {
             return NextResponse.json(
-                { error: "Unauthorized" }, { status: 401 }
+                { error: 'Unauthorized' },
+                { status: 401 }
             );
         }
 
         // Get user bookings with event details
-        const [rows] = await pool.query(
+        const [rows] = await pool.execute(
             `SELECT
                 bookings.id AS booking_id,
                 events.id AS event_id,
                 events.title,
                 events.event_date,
                 events.location,
-                bookings.created_at
+                bookings.booking_date
              FROM bookings
-             JOIN events
-             ON bookings.event_id = events.id
+             JOIN events ON bookings.event_id = events.id
              WHERE bookings.user_id = ?
              ORDER BY events.event_date ASC`,
-            [user.id]
+            [session.id]
         );
 
-        return NextResponse.json(rows);
+        return NextResponse.json(rows, { status: 200 });
     } catch (error) {
-        console.error("GET BOOKINGS ERROR:", error);
+        console.error('GET /api/bookings error:', error);
         return NextResponse.json(
-            { error: "Failed to fetch bookings" }, { status: 500 }
+            { error: 'Failed to fetch bookings' },
+            { status: 500 }
         );
     }
 }
 
-// POST /api/bookings
-// Create a new booking for the logged-in attendee
+/**
+ * POST /api/bookings
+ * Reserve/book an event for the logged-in user
+ *
+ * Body: { event_id }
+ *
+ * Checks performed in order:
+ * 1. Authentication: User must be logged in
+ * 2. Duplicate Check: User cannot book the same event twice
+ * 3. Capacity Check: Event must not be full
+ * 4. Insert: Create the booking if all checks pass
+ *
+ * Responses:
+ * 201: { message, booking_id }
+ * 400: { error } — validation error, duplicate booking, or event full
+ * 401: { error } — not authenticated
+ * 403: { error } — insufficient permissions
+ * 404: { error } — event not found
+ * 500: { error } — database error
+ */
 export async function POST(request) {
-
     try {
-
-        // Get current user from session cookie
-        const user = await getSession();
-
-        // User must be logged in
-        if (!user) {
+        // [CHECK 1] Authentication: Get session and verify user is logged in
+        const session = await getSession();
+        if (!session) {
             return NextResponse.json(
-                { error: "You must be logged in to create a booking." }, { status: 401 }
+                { error: 'You must be logged in to create a booking.' },
+                { status: 401 }
             );
         }
 
         // Only attendees can book events
-        if (user.role !== "attendee") {
+        if (session.role !== 'attendee') {
             return NextResponse.json(
-                { error: "Only attendees can book events." }, { status: 403 }
+                { error: 'Only attendees can book events.' },
+                { status: 403 }
             );
         }
 
-        // Read event id from request body
+        const userId = session.id;
+
+        // Parse and validate event_id from request body
         const { event_id } = await request.json();
 
-        // Validate event id
-        if (!event_id) {
+        if (!event_id || isNaN(parseInt(event_id)) || parseInt(event_id) < 1) {
             return NextResponse.json(
-                { error: "Event ID is required." },
+                { error: 'Event ID is required and must be a positive integer.' },
                 { status: 400 }
             );
         }
 
-        // Check if event exists
-        const [events] = await pool.query(
-            "SELECT id, capacity FROM events WHERE id = ?",
-            [event_id]
+        const eventId = parseInt(event_id);
+
+        // Verify event exists and get capacity
+        const [events] = await pool.execute(
+            'SELECT id, capacity FROM events WHERE id = ?',
+            [eventId]
         );
 
         if (events.length === 0) {
             return NextResponse.json(
-                { error: "Event not found." },
+                { error: 'Event not found.' },
                 { status: 404 }
             );
         }
 
-        // Count current bookings for this event
-        const [countRows] = await pool.query(
-            "SELECT COUNT(*) AS total FROM bookings WHERE event_id = ?",
-            [event_id]
+        const eventCapacity = events[0].capacity;
+
+        // [CHECK 2] Duplicate Check: Ensure user hasn't already booked this event
+        const [duplicateRows] = await pool.execute(
+            'SELECT id FROM bookings WHERE user_id = ? AND event_id = ?',
+            [userId, eventId]
         );
 
-        // Stop booking if event is full
-        if (countRows[0].total >= events[0].capacity) {
+        if (duplicateRows.length > 0) {
             return NextResponse.json(
-                { error: "Event is fully booked." },
+                { error: 'You have already booked this event.' },
                 { status: 400 }
             );
         }
 
-        // Create booking
-        await pool.query(
-            "INSERT INTO bookings (user_id, event_id) VALUES (?, ?)",
-            [user.id, event_id]
+        // [CHECK 3] Capacity Check: Ensure event isn't full
+        const [bookingCountRows] = await pool.execute(
+            'SELECT COUNT(*) as count FROM bookings WHERE event_id = ?',
+            [eventId]
+        );
+
+        const currentBookings = bookingCountRows[0].count;
+
+        if (currentBookings >= eventCapacity) {
+            return NextResponse.json(
+                { error: 'Event is fully booked.' },
+                { status: 400 }
+            );
+        }
+
+        // [CHECK 4] Insert: Create the booking
+        const [result] = await pool.execute(
+            'INSERT INTO bookings (user_id, event_id, booking_date) VALUES (?, ?, CURRENT_TIMESTAMP)',
+            [userId, eventId]
         );
 
         return NextResponse.json(
-            { message: "Booking created successfully." },
+            { message: 'Booking created successfully.', booking_id: result.insertId },
             { status: 201 }
         );
     } catch (error) {
-        // Duplicate booking protection
-        if (error.code === "ER_DUP_ENTRY") {
-            return NextResponse.json(
-                { error: "You have already booked this event." },
-                { status: 400 }
-            );
-        }
-
-        console.error("POST BOOKINGS ERROR:", error);
+        console.error('POST /api/bookings error:', error);
         return NextResponse.json(
-            { error: "An error occurred while creating the booking." },
+            { error: 'An error occurred while creating the booking.' },
             { status: 500 }
         );
     }
