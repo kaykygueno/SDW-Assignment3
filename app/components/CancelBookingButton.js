@@ -1,3 +1,6 @@
+// Client component used to cancel a user's booking
+// Sends a DELETE request and refreshes the page after success
+
 'use client';
 
 import { useRouter } from "next/navigation";

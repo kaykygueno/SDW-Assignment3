@@ -22,10 +22,13 @@ export default async function RootLayout({ children }) {
               F1 Tickets
             </Link>
 
+            
             <div className="flex items-center gap-6 text-sm font-medium text-white">
+              {role === "attendee" && (
               <Link href="/events" className="hover:text-white/70">
                 Events
               </Link>
+              )}
 
               {session && (
                 <Link href="/dashboard" className="hover:text-white/70">

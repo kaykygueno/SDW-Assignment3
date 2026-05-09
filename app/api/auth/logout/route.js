@@ -1,14 +1,22 @@
-// POST /api/auth/logout — expire the session cookie to log the user out
+// POST /api/auth/logout
+// Remove session cookie and log the user out
+
 import { cookies } from 'next/headers';
 
 export async function POST() {
-    // Explicitly set Max-Age=0 so the browser immediately discards the cookie
+
+    // Remove JWT session cookie
+    // maxAge: 0 tells the browser to delete the cookie immediately
     (await cookies()).set('session', '', {
-        httpOnly: true,
+        httpOnly: true, // Prevent JavaScript access to cookie
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 0,   // expire immediately
+        maxAge: 0,
         path: '/',
     });
 
-    return Response.json({ message: 'Logged out successfully.' }, { status: 200 });
+    // Success response
+    return Response.json(
+        { message: 'Logged out successfully.' },
+        { status: 200 }
+    );
 }

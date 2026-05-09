@@ -4,7 +4,9 @@ import { getSession } from '@/lib/auth';
 import pool from '@/lib/db';
 import CancelBookingButton from '@/app/components/CancelBookingButton';
 
+//----------------------------------------------------------
 export default async function BookingsPage() {
+
   const user = await getSession();
 
   if (!user) {
@@ -33,35 +35,26 @@ export default async function BookingsPage() {
   return (
     <main className="flex-1 max-w-5xl mx-auto px-4 py-12 w-full">
       <p className="text-[#e10600] text-xs font-bold tracking-widest uppercase mb-1">
-        Bookings
-      </p>
+        Bookings</p>
 
       <h1 className="text-3xl font-black mb-4">My Tickets</h1>
 
       {bookings.length === 0 ? (
         <p className="text-gray-400">
-          You have not booked any Grand Prix tickets yet.
-        </p>
+          You have not booked any Grand Prix tickets yet.</p>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 mt-6">
           {bookings.map((booking) => (
-            <li
-              key={booking.booking_id}
-              className="rounded border border-white/10 bg-white/5 p-5 flex flex-col gap-2"
-            >
+            <li key={booking.booking_id} className="rounded border border-white/10 bg-white/5 p-5 flex flex-col gap-2">
+
               <h2 className="font-bold text-lg">{booking.title}</h2>
 
-              <p className="text-xs text-gray-400">
-                📅 {new Date(booking.event_date).toLocaleDateString('en-IE', {
-                  dateStyle: 'medium',
-                })}
-                &nbsp;·&nbsp;
-                📍 {booking.location}
-              </p>
+              <p className="text-xs text-gray-400"> {new Date(booking.event_date).toLocaleDateString('en-IE', {
+                  dateStyle: 'medium', })}
+                &nbsp;·&nbsp; {booking.location}</p>
 
               <p className="text-xs text-gray-500">
-                Organised by {booking.organiser_name || 'Unknown organiser'}
-              </p>
+                Organised by {booking.organiser_name || 'Unknown organiser'}</p>
 
               {booking.description && (
                 <p className="text-sm text-gray-300 mt-1">
@@ -76,12 +69,11 @@ export default async function BookingsPage() {
               </p>
 
               <p className="text-xs text-yellow-400">
-
                 Booking ID: {booking.booking_id}
-
               </p>
 
-              <CancelBookingButton bookingId={booking.booking_id} />
+              <CancelBookingButton bookingId={booking.booking_id}/>
+
             </li>
             
           ))}
