@@ -2,15 +2,12 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
-// PATCH /api/admin/users/[id]
-// Admin-only route used to change a user's role
-export async function PATCH(request, { params }) {
+// DELETE /api/admin/bookings/[id]
+// Admin can delete any booking
+export async function DELETE(request, { params }) {
   try {
-
-    // Get current logged-in user session
     const session = await getSession();
 
-    // Only admins can update user roles
     if (!session || session.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden' },
@@ -18,46 +15,34 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    // Get user id from route params
     const { id } = await params;
 
-    // Read request body
-    const body = await request.json();
+    const [rows] = await pool.query(
+      'SELECT * FROM bookings WHERE id = ?',
+      [id]
+    );
 
-    // Allowed application roles
-    const allowedRoles = [
-      'attendee',
-      'organiser',
-      'admin',
-    ];
-
-    // Prevent invalid role updates
-    if (!allowedRoles.includes(body.role)) {
+    if (rows.length === 0) {
       return NextResponse.json(
-        { error: 'Invalid role' },
-        { status: 400 }
+        { error: 'Booking not found' },
+        { status: 404 }
       );
     }
 
-    // Update user role in database
-    await pool.execute(
-      'UPDATE users SET role = ? WHERE id = ?',
-      [body.role, id]
+    await pool.query(
+      'DELETE FROM bookings WHERE id = ?',
+      [id]
     );
 
-    // Success response
     return NextResponse.json({
-      message: 'User role updated successfully',
+      message: 'Booking deleted successfully',
     });
 
   } catch (error) {
+    console.error('ADMIN DELETE BOOKING ERROR:', error);
 
-    // Log server error
-    console.error('UPDATE USER ROLE ERROR:', error);
-
-    // Generic server error response
     return NextResponse.json(
-      { error: 'Failed to update user role' },
+      { error: 'Failed to delete booking' },
       { status: 500 }
     );
   }

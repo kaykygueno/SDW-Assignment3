@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
 import pool from '@/lib/db';
 import AdminRoleSelect from '@/app/components/AdminRoleSelect';
+import AdminDeleteBookingButton from '@/app/components/AdminDeleteBookingButton';
 
 //--------------------------------------------------------------
 
