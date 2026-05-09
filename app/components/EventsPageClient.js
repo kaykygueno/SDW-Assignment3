@@ -5,6 +5,7 @@
 // Attendees can book events using the Book Now button.
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 const EMPTY_FORM = {
     title: '',
@@ -17,6 +18,7 @@ const EMPTY_FORM = {
 export default function EventsPageClient({ role }) {
     // Only organisers and admins can create new events
     const canCreate = role === 'organiser' || role === 'admin';
+    const router = useRouter();
 
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -107,8 +109,14 @@ export default function EventsPageClient({ role }) {
                 return;
             }
 
-            setSuccess(data.message || 'Event booked successfully.');
+            // Show success message and redirect to My Bookings page
+            setSuccess(data.message || 'Event booked successfully. Redirecting to My Bookings...');
             loadEvents();
+            
+            // Redirect to bookings page after a short delay to show the success message
+            setTimeout(() => {
+                router.push('/bookings');
+            }, 1500);
         } catch {
             setError('Network error — please try again.');
         }

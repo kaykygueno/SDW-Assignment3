@@ -48,6 +48,7 @@ export async function GET(request) {
         } else {
             // All other cases — full public listing
             // can_edit = 1 only if the logged-in user owns the row
+            // already_booked = 1 if the logged-in attendee has booked this event
             [rows] = await pool.execute(
                 `SELECT
                     e.id,
@@ -63,13 +64,19 @@ export async function GET(request) {
                     CASE
                         WHEN ? IS NOT NULL AND (e.organiser_id = ? OR ? = 'admin')
                         THEN 1 ELSE 0
-                    END    AS can_edit
+                    END    AS can_edit,
+                    CASE
+                        WHEN ? IS NOT NULL AND EXISTS (
+                            SELECT 1 FROM bookings WHERE event_id = e.id AND user_id = ?
+                        )
+                        THEN 1 ELSE 0
+                    END    AS already_booked
                  FROM events e
                  JOIN users  u ON u.id = e.organiser_id
                  LEFT JOIN bookings b ON b.event_id = e.id
                     GROUP BY e.id
                  ORDER BY e.event_date ASC`,
-                [userId ?? null, userId ?? null, role ?? null]
+                [userId ?? null, userId ?? null, role ?? null, userId ?? null, userId ?? null]
             );
         }
 

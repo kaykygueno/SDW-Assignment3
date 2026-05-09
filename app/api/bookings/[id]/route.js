@@ -2,23 +2,11 @@ import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { getSession } from "@/lib/auth";
 
-/**
- * DELETE /api/bookings/[id]
- * Cancel a booking owned by the logged-in user
- * 
- * Verification: Ensures the requester is the booking owner
- * Execution: Removes the booking record from database
- * 
- * Responses:
- * 200: { message: "Booking cancelled successfully" }
- * 400: { error } — invalid booking ID
- * 401: { error } — not authenticated
- * 404: { error } — booking not found or doesn't belong to user
- * 500: { error } — database error
- */
+// DELETE /api/bookings/[id]
+// Cancel a booking owned by the logged-in user
 export async function DELETE(request, { params }) {
     try {
-        // Authentication: Get current logged-in user from session cookie
+        // Get current logged-in user from session cookie
         const user = await getSession();
 
         // User must be authenticated
@@ -41,13 +29,13 @@ export async function DELETE(request, { params }) {
 
         const bookingId = parseInt(id);
 
-        // VERIFICATION: Check if booking exists and belongs to this user
+        // Check if booking exists and belongs to this user
         const [rows] = await pool.execute(
             'SELECT id FROM bookings WHERE id = ? AND user_id = ?',
             [bookingId, user.id]
         );
 
-        // Booking not found or doesn't belong to this user
+        // Booking not found
         if (rows.length === 0) {
             return NextResponse.json(
                 { error: 'Booking not found' },
@@ -55,7 +43,7 @@ export async function DELETE(request, { params }) {
             );
         }
 
-        // EXECUTION: Delete booking from database (with double protection)
+        // Delete booking from database
         await pool.execute(
             'DELETE FROM bookings WHERE id = ? AND user_id = ?',
             [bookingId, user.id]

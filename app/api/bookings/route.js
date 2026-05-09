@@ -2,15 +2,8 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
-/**
- * GET /api/bookings
- * List bookings for the logged-in user
- * 
- * Responses:
- * 200: [ { booking_id, event_id, title, event_date, location, booking_date } ]
- * 401: { error } — not authenticated
- * 500: { error } — database error
- */
+// GET /api/bookings
+// Get all bookings for the logged-in user
 export async function GET() {
     try {
         // Get current user from session cookie
@@ -50,29 +43,11 @@ export async function GET() {
     }
 }
 
-/**
- * POST /api/bookings
- * Reserve/book an event for the logged-in user
- *
- * Body: { event_id }
- *
- * Checks performed in order:
- * 1. Authentication: User must be logged in
- * 2. Duplicate Check: User cannot book the same event twice
- * 3. Capacity Check: Event must not be full
- * 4. Insert: Create the booking if all checks pass
- *
- * Responses:
- * 201: { message, booking_id }
- * 400: { error } — validation error, duplicate booking, or event full
- * 401: { error } — not authenticated
- * 403: { error } — insufficient permissions
- * 404: { error } — event not found
- * 500: { error } — database error
- */
+// POST /api/bookings
+// Create a new booking for the logged-in attendee
 export async function POST(request) {
     try {
-        // [CHECK 1] Authentication: Get session and verify user is logged in
+        // Get current user from session cookie
         const session = await getSession();
         if (!session) {
             return NextResponse.json(
@@ -91,7 +66,7 @@ export async function POST(request) {
 
         const userId = session.id;
 
-        // Parse and validate event_id from request body
+        // Read event id from request body and validate
         const { event_id } = await request.json();
 
         if (!event_id || isNaN(parseInt(event_id)) || parseInt(event_id) < 1) {
@@ -103,7 +78,7 @@ export async function POST(request) {
 
         const eventId = parseInt(event_id);
 
-        // Verify event exists and get capacity
+        // Check if event exists and read its capacity
         const [events] = await pool.execute(
             'SELECT id, capacity FROM events WHERE id = ?',
             [eventId]
@@ -118,7 +93,7 @@ export async function POST(request) {
 
         const eventCapacity = events[0].capacity;
 
-        // [CHECK 2] Duplicate Check: Ensure user hasn't already booked this event
+        // Prevent duplicate bookings for the same user and event
         const [duplicateRows] = await pool.execute(
             'SELECT id FROM bookings WHERE user_id = ? AND event_id = ?',
             [userId, eventId]
@@ -131,7 +106,7 @@ export async function POST(request) {
             );
         }
 
-        // [CHECK 3] Capacity Check: Ensure event isn't full
+        // Count current bookings and stop if event is full
         const [bookingCountRows] = await pool.execute(
             'SELECT COUNT(*) as count FROM bookings WHERE event_id = ?',
             [eventId]
@@ -146,7 +121,7 @@ export async function POST(request) {
             );
         }
 
-        // [CHECK 4] Insert: Create the booking
+        // Create booking record
         const [result] = await pool.execute(
             'INSERT INTO bookings (user_id, event_id, booking_date) VALUES (?, ?, CURRENT_TIMESTAMP)',
             [userId, eventId]
