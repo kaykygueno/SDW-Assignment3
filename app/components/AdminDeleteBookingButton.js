@@ -24,8 +24,7 @@ export default function AdminDeleteBookingButton({ bookingId }) {
   return (
     <button
       onClick={handleDelete}
-      className="bg-red-700 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-800"
-    >
+      className="bg-red-700 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-800">
       Delete
     </button>
   );

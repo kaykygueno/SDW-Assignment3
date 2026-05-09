@@ -155,6 +155,7 @@ export default async function AdminPage() {
                 <th className="text-left p-3">Email</th>
                 <th className="text-left p-3">Event</th>
                 <th className="text-left p-3">Booked At</th>
+                <th className="text-left p-3">Action</th>
               </tr>
             </thead>
 
@@ -165,6 +166,9 @@ export default async function AdminPage() {
                   <td className="p-3">{booking.attendee_name}</td>
                   <td className="p-3">{booking.attendee_email}</td>
                   <td className="p-3">{booking.event_title}</td>
+                  <td className="p-3">
+                    <AdminDeleteBookingButton bookingId={booking.id} />
+                  </td>
                   <td className="p-3">
                     {new Date(booking.created_at).toLocaleDateString('en-IE', {
                       dateStyle: 'medium',
