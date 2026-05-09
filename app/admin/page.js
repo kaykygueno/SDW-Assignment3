@@ -4,6 +4,7 @@ import { getSession } from '@/lib/auth';
 import pool from '@/lib/db';
 import AdminRoleSelect from '@/app/components/AdminRoleSelect';
 import AdminDeleteBookingButton from '@/app/components/AdminDeleteBookingButton';
+import AdminDeleteEventButton from '@/app/components/AdminDeleteEventButton';
 
 //--------------------------------------------------------------
 
@@ -114,6 +115,7 @@ export default async function AdminPage() {
                 <th className="text-left p-3">Location</th>
                 <th className="text-left p-3">Organiser</th>
                 <th className="text-left p-3">Booked</th>
+                <th className="text-left p-3">Action</th>
               </tr>
             </thead>
 
@@ -131,6 +133,9 @@ export default async function AdminPage() {
                   <td className="p-3">{event.organiser_name || 'Unknown'}</td>
                   <td className="p-3">
                     {event.booked_count} / {event.capacity}
+                  </td>
+                  <td className="p-3">
+                    <AdminDeleteEventButton eventId={event.id} />
                   </td>
                 </tr>
               ))}
