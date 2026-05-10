@@ -42,14 +42,14 @@ export default async function AdminPage() {
   const [bookings] = await pool.execute(
     `SELECT
         b.id,
-        b.created_at,
+        b.booking_date,
         users.name AS attendee_name,
         users.email AS attendee_email,
         events.title AS event_title
      FROM bookings b
      JOIN users ON b.user_id = users.id
      JOIN events ON b.event_id = events.id
-     ORDER BY b.created_at DESC`
+     ORDER BY b.booking_date DESC`
   );
 
 //--------------------------------------------------------------
