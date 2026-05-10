@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
 import pool from '@/lib/db';
 import AdminRoleSelect from '@/app/components/AdminRoleSelect';
+import AdminDeleteUserButton from '@/app/components/AdminDeleteUserButton';
 import AdminDeleteBookingButton from '@/app/components/AdminDeleteBookingButton';
 import AdminDeleteEventButton from '@/app/components/AdminDeleteEventButton';
 
@@ -10,12 +11,13 @@ import AdminDeleteEventButton from '@/app/components/AdminDeleteEventButton';
 
 export default async function AdminPage() {
   const session = await getSession();
-      
-      if (!session || session.role !== 'admin') {
-        redirect('/dashboard?error=access_denied');
-      }
+  const ROOT_ADMIN_EMAIL = 'admin@f1.com';
 
-//--------------------------------------------------------------
+  if (!session || session.role !== 'admin') {
+    redirect('/dashboard?error=access_denied');
+  }
+
+  //--------------------------------------------------------------
 
   const [users] = await pool.execute(
     `SELECT id, name, email, role
@@ -52,7 +54,7 @@ export default async function AdminPage() {
      ORDER BY b.booking_date DESC`
   );
 
-//--------------------------------------------------------------
+  //--------------------------------------------------------------
 
   return (
     <main className="flex-1 max-w-6xl mx-auto px-4 py-12 w-full">
@@ -61,42 +63,60 @@ export default async function AdminPage() {
 
       <h1 className="text-3xl font-black mb-2">Admin Panel</h1>
 
-        <p className="text-gray-400 mb-8">
-          Logged in as <span className="text-white font-medium">{session.email}</span>
-          {' '}· role:{' '}
-          <span className="text-[#e10600] font-bold">{session.role}</span>
-        </p>
+      <p className="text-gray-400 mb-8">
+        Logged in as <span className="text-white font-medium">{session.email}</span>
+        {' '}· role:{' '}
+        <span className="text-[#e10600] font-bold">{session.role}</span>
+      </p>
 
       <section className="mb-10">
 
-          <h2 className="text-xl font-bold mb-4">Users</h2>
+        <h2 className="text-xl font-bold mb-4">Users</h2>
 
-          <div className="overflow-x-auto rounded border border-white/10">
+        <div className="overflow-x-auto rounded border border-white/10">
 
-            <table className="w-full text-sm">
-              <thead className="bg-white/10 text-gray-300">
-                <tr>
-                  <th className="text-left p-3">ID</th>
-                  <th className="text-left p-3">Name</th>
-                  <th className="text-left p-3">Email</th>
-                  <th className="text-left p-3">Role</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
+          <table className="w-full text-sm">
+            <thead className="bg-white/10 text-gray-300">
+              <tr>
+                <th className="text-left p-3">ID</th>
+                <th className="text-left p-3">Name</th>
+                <th className="text-left p-3">Email</th>
+                <th className="text-left p-3">Role</th>
+                <th className="text-left p-3">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => {
+                const isRootAccount = (user.email || '').toLowerCase() === ROOT_ADMIN_EMAIL;
+
+                return (
                   <tr key={user.id} className="border-t border-white/10">
                     <td className="p-3">{user.id}</td>
                     <td className="p-3">{user.name}</td>
                     <td className="p-3">{user.email}</td>
                     <td className="p-3">
-                      <AdminRoleSelect userId={user.id} currentRole={user.role} />
+                      {isRootAccount ? (
+                        <span className="inline-flex items-center rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-300">
+                          🔒 Protected Account
+                        </span>
+                      ) : (
+                        <AdminRoleSelect userId={user.id} currentRole={user.role} />
+                      )}
+                    </td>
+                    <td className="p-3">
+                      {isRootAccount ? (
+                        <span className="text-xs text-gray-500">Locked</span>
+                      ) : (
+                        <AdminDeleteUserButton userId={user.id} userEmail={user.email} />
+                      )}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                );
+              })}
+            </tbody>
+          </table>
 
-          </div>
+        </div>
 
       </section>
 
@@ -172,12 +192,12 @@ export default async function AdminPage() {
                   <td className="p-3">{booking.attendee_email}</td>
                   <td className="p-3">{booking.event_title}</td>
                   <td className="p-3">
-                    <AdminDeleteBookingButton bookingId={booking.id} />
-                  </td>
-                  <td className="p-3">
-                    {new Date(booking.created_at).toLocaleDateString('en-IE', {
+                    {new Date(booking.booking_date).toLocaleDateString('en-IE', {
                       dateStyle: 'medium',
                     })}
+                  </td>
+                  <td className="p-3">
+                    <AdminDeleteBookingButton bookingId={booking.id} />
                   </td>
                 </tr>
               ))}
@@ -187,7 +207,7 @@ export default async function AdminPage() {
         </div>
 
       </section>
-      
+
     </main>
   );
 }

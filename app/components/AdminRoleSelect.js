@@ -23,7 +23,7 @@ export default function AdminRoleSelect({
     const res = await fetch(
       `/api/admin/users/${userId}`,
       {
-        method: 'PATCH',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -63,11 +63,6 @@ export default function AdminRoleSelect({
       <option value="organiser">
         organiser
       </option>
-
-      <option value="admin">
-        admin
-      </option>
-
     </select>
   );
 }
