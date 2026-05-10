@@ -28,6 +28,7 @@ export default function EventsPageClient({ role }) {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [bookingEventId, setBookingEventId] = useState(null);
 
     // Fetch all events from the API
     async function loadEvents() {
@@ -96,6 +97,7 @@ export default function EventsPageClient({ role }) {
     async function handleBooking(eventId) {
         setError('');
         setSuccess('');
+        setBookingEventId(eventId);
 
         try {
             const res = await fetch('/api/bookings', {
@@ -120,6 +122,8 @@ export default function EventsPageClient({ role }) {
             setError(data.error || 'Unable to book event.');
         } catch {
             setError('Network error — please try again.');
+        } finally {
+            setBookingEventId(null);
         }
     }
 
@@ -130,6 +134,9 @@ export default function EventsPageClient({ role }) {
             router.push('/login');
             return;
         }
+
+        // Prevent duplicate clicks while this event is being booked
+        if (bookingEventId === eventId) return;
 
         handleBooking(eventId);
     }
@@ -313,7 +320,7 @@ export default function EventsPageClient({ role }) {
                                         disabled
                                         className="mt-3 bg-gray-800 text-white px-4 py-2 rounded font-bold uppercase tracking-widest text-xs opacity-70 cursor-not-allowed"
                                     >
-                                        Event Full
+                                        Fully Booked
                                     </button>
                                 ) : role === 'attendee' && ev.already_booked ? (
                                     <button
@@ -325,9 +332,10 @@ export default function EventsPageClient({ role }) {
                                 ) : (
                                     <button
                                         onClick={() => handleBookNow(ev.id)}
-                                        className="mt-3 bg-[#e10600] text-white px-4 py-2 rounded font-bold uppercase tracking-widest text-xs hover:bg-red-700 transition-colors"
+                                        disabled={bookingEventId === ev.id}
+                                        className="mt-3 bg-[#e10600] text-white px-4 py-2 rounded font-bold uppercase tracking-widest text-xs hover:bg-red-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                                     >
-                                        Book Now
+                                        {bookingEventId === ev.id ? 'Booking...' : 'Book Now'}
                                     </button>
                                 )
                             )}

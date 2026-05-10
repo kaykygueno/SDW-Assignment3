@@ -2,12 +2,23 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
+// Strict auth gate for bookings endpoints
+async function requireValidSession() {
+    const session = await getSession();
+
+    if (!session || !session.id || Number.isNaN(Number(session.id))) {
+        return null;
+    }
+
+    return session;
+}
+
 // GET /api/bookings
 // Get all bookings for the logged-in user
 export async function GET() {
     try {
         // Get current user from session cookie
-        const session = await getSession();
+        const session = await requireValidSession();
 
         // User must be logged in
         if (!session) {
@@ -48,7 +59,7 @@ export async function GET() {
 export async function POST(request) {
     try {
         // Get current user from session cookie
-        const session = await getSession();
+        const session = await requireValidSession();
         if (!session) {
             return NextResponse.json(
                 { error: 'You must be logged in to create a booking.' },
