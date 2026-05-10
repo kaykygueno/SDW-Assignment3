@@ -24,6 +24,14 @@ export async function PUT(request, { params }) {
             );
         }
 
+        const sessionUserId = Number(session.id);
+        if (!Number.isInteger(sessionUserId) || sessionUserId <= 0) {
+            return Response.json(
+                { error: 'Unauthorized. Invalid session user.' },
+                { status: 401 }
+            );
+        }
+
         const body = await request.json();
         const newRole = body?.role?.trim();
 
@@ -59,8 +67,8 @@ export async function PUT(request, { params }) {
             );
         }
 
-        // Prevent admin from promoting themselves (safety check)
-        if (userId === session.id) {
+        // Prevent any admin from changing their own role (self-demotion protection)
+        if (userId === sessionUserId) {
             return Response.json(
                 { error: 'Cannot change your own role.' },
                 { status: 400 }
@@ -128,6 +136,14 @@ export async function DELETE(request, { params }) {
             );
         }
 
+        const sessionUserId = Number(session.id);
+        if (!Number.isInteger(sessionUserId) || sessionUserId <= 0) {
+            return Response.json(
+                { error: 'Unauthorized. Invalid session user.' },
+                { status: 401 }
+            );
+        }
+
         // Verify user exists before deleting
         const [user] = await pool.execute(
             'SELECT id, name, email, role FROM users WHERE id = ?',
@@ -152,7 +168,7 @@ export async function DELETE(request, { params }) {
         }
 
         // Prevent deleting your own account
-        if (userId === session.id) {
+        if (userId === sessionUserId) {
             return Response.json(
                 { error: 'Cannot delete your own account.' },
                 { status: 400 }
