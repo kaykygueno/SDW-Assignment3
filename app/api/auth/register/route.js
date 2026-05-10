@@ -11,9 +11,9 @@ export async function POST(request) {
         const email = body?.email?.trim().toLowerCase();
         const password = body?.password;
 
-        //
-        const allowedRoles = ['attendee', 'organiser'];
-        const role = allowedRoles.includes(body?.role) ? body.role : 'attendee';
+        // BACKEND VALIDATION: Ignore any role sent from frontend — always use 'attendee'
+        // If body contains role field (e.g., {"role":"admin"}), we explicitly discard it
+        const role = 'attendee';
 
         if (!name || !email || !password) {
             return Response.json(

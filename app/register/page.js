@@ -98,17 +98,6 @@ export default function RegisterPage() {
           />
         </div>
 
-        <select
-          name="role"
-          value={form.role}
-          onChange={handleChange}
-          className="w-full rounded border border-gray-600 bg-[#15151e] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[#e10600]"
-        >
-          <option value="">Select Role</option>
-          <option value="attendee">Attendee</option>
-          <option value="organiser">Organiser</option>
-        </select>
-
         <button
           type="submit"
           className="w-full rounded bg-[#e10600] py-2 text-sm font-bold text-white hover:bg-red-700 transition-colors"
